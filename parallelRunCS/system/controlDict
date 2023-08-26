@@ -93,7 +93,7 @@ functions
             output.open("postProcess.txt",std::ofstream::app);
 
 
-            // This piece of code works precisely for both series and parallel runs.
+            // This piece of code works precisely for both serial and parallel runs.
             //- lookup fields
             const volScalarField& p = mesh().lookupObject<volScalarField>("p");
             scalar p_avg = fvc::domainIntegrate(p).value() / sum(p.mesh().V()).value();
