@@ -1,0 +1,113 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.1                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+libs
+(
+    "liblduSolvers.so"
+);
+
+application simpleFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         2000;
+
+deltaT          1;
+
+writeControl    timeStep;
+
+writeInterval   100;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression uncompressed;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable yes;
+
+// ************************************************************************* //
+//Author
+    //Ehsan Golab, SUT. All rights reserved.
+
+InfoSwitches
+{
+    writePrecision  6;
+    writeJobInfo    0;
+    allowSystemOperations 1;
+}
+
+functions
+{
+    postProcess
+    {
+        functionObjectLibs	("libutilityFunctionObjects.so");
+        type			coded;
+        enabled			true;
+        outputControl		outputTime;//timeStep;//outputTime;
+        redirectType		postProcess;
+
+        codeInclude
+        #{
+            #include "fvCFD.H"
+        #};
+
+        codeOptions
+        #{
+            -I$(LIB_SRC)/finiteVolume/lnInclude \
+            -I$(LIB_SRC)/meshTools/lnInclude
+        #};
+
+        codeLibs
+        #{
+            -lmeshTools \
+            -lfiniteVolume
+        #};
+
+        code
+        #{
+            std::ofstream output;
+            output.open("postProcess.txt",std::ofstream::app);
+
+
+            // This piece of code works precisely for both series and parallel runs.
+            //- lookup fields
+            const volScalarField& p = mesh().lookupObject<volScalarField>("p");
+            scalar p_avg = fvc::domainIntegrate(p).value() / sum(p.mesh().V()).value();
+            //scalar p_avg = sum(p*p.mesh().V()).value() / sum(p.mesh().V()).value();
+
+            // It can be used to collect data from processors if the above code doesn't work correctly.
+            //reduce(p_avg, sumOp<scalar>());
+
+            //- save data
+            output << p_avg << "\n";
+            output.close();
+        #};
+    }
+
+}
+
+// ************************************************************************* //
